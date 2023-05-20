@@ -1,0 +1,19 @@
+{
+  "name": "chafouin-telegram",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Evan Gruère <evan.gruere@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@microsoft/fetch-event-source": "^2.0.1",
+    "debug": "^4.3.4",
+    "dotenv": "^16.0.3",
+    "telegraf": "^4.12.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.1"
+  }
+}
