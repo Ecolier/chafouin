@@ -12,11 +12,7 @@ import fs from 'fs';
 import { torrc } from './tor.js';
 import { exec } from 'child_process';
 
-if (!process.env.UZRAILWAYS_ORIGIN) {
-  throw Error("process.env.UZRAILWAYS_ORIGIN should be set.");
-}
-
-const UZRAILWAYS_ORIGIN = process.env.UZRAILWAYS_ORIGIN;
+const UZRAILWAYS_ORIGIN = 'https://e-ticket.railway.uz';
 const UZRAILWAYS_TRAINS_ENDPOINT = "/api/v1/trains/availability/space/between/stations";
 
 export class UZRWTripProvider implements TripProvider {

@@ -6,5 +6,11 @@
     "strict": true,
     "moduleResolution": "node",
 		"allowSyntheticDefaultImports": true,
-  }
+    "outDir": "dist/",
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/"
+  ],
+  "exclude": ["node_modules/"]
 }
