@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { Trip } from './trip';
-import { filterTrips, parseTripFilters } from './trip-filter';
-import { validateTripRequest } from './trip-request-validate';
-import { TripObserver } from './trip-observer';
+import { Trip, TripUpdate } from '../../chafouin-shared/trip.js';
+import { filterTrips, parseTripFilters } from './trip-filter.js';
+import { validateTripRequest } from './trip-request-validate.js';
+import { TripObserver } from './trip-observer.js';
 
 export const subscribeTripRouter = (tripObserver: TripObserver, validStations: string[]) => 
 Router().get('/subscribe', 
@@ -12,26 +12,22 @@ async (req, res) => {
   const query = res.locals.tripQuery;
   const filters = res.locals.tripFilters;
 
-  const clientId = tripObserver.addClient(query, (updatedTrips: Trip[], outdatedTrips: Trip[]) => {
-    const filteredTrips = filterTrips(updatedTrips, outdatedTrips, filters);
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  })
+
+  const clientId = tripObserver.addClient(query, (updatedTrips: TripUpdate[]) => {
+    const filteredTrips = filterTrips(updatedTrips, filters);
     if (filteredTrips.length === 0) {
       return;
     }
-    return res.write(`${JSON.stringify({
-      date: new Date().toLocaleString('fr-FR'),
-      update: filteredTrips,
-    })}\n\n`);
-  });
-  
-  res.set({
-    'Cache-Control': 'no-cache',
-    'Content-Type': 'text/event-stream',
-    'Connection': 'keep-alive'
+    res.write('event: update\ndata: ' + JSON.stringify(filteredTrips) + '\n\n');
   });
   
   res.on('close', () => {
     tripObserver.removeClient(query, clientId);
+    res.end();
   });
-  
-  res.flushHeaders();
 });

@@ -1,5 +1,5 @@
 import {Request} from 'express';
-import { TripQuery } from './trip-query';
+import { TripQuery } from '../../chafouin-shared/trip-query.js';
 
 export type TripRequest<T extends object = object> = Request<unknown, unknown, unknown, {
   outbound: string, 

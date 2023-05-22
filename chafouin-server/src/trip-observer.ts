@@ -1,8 +1,11 @@
 import {EventEmitter} from "events";
-import {Trip} from "./trip";
-import {TripQuery, areTripQueriesEqual} from "./trip-query";
-import {FetchTripFunction, TripUpdateFunction, TripWorker } from "./trip-worker";
+import {Trip} from "../../chafouin-shared/trip.js";
+import {TripQuery, areTripQueriesEqual} from "../../chafouin-shared/trip-query.js";
+import {FetchTripFunction, TripUpdateFunction, TripWorker } from "./trip-worker.js";
 import winston from "winston";
+import { torrc } from "./tor.js";
+import * as fs from 'fs'
+import { TripProvider } from "./provider.js";
 
 export interface TripObserverOptions {
   interval: number;
@@ -13,6 +16,7 @@ type Clients = {[id: string]: EventEmitter};
 export class TripObserver {
   private readonly tripWorkers = new Map<TripQuery, TripWorker>();
   private readonly clientEmitters = new Map<TripQuery, Clients>();
+  private readonly emitter = new EventEmitter();
 
   private updateHandler = (forQuery: TripQuery, updatedTrips: Trip[], outdatedTrips: Trip[]) => {
     const clients = this.getClients(forQuery);
@@ -23,7 +27,7 @@ export class TripObserver {
   }
 
   constructor(
-    private readonly fetchFunction: FetchTripFunction, 
+    private readonly tripProvider: TripProvider, 
     public readonly options: TripObserverOptions = {
     interval: 60000,
   }) {}
@@ -58,6 +62,10 @@ export class TripObserver {
     return count;
   }
 
+  onTripWorkerCreated(tripWorkerCreatedFn: (forQuery: TripQuery, worker: TripWorker) => void) {
+    this.emitter.on('trip_worker_created', tripWorkerCreatedFn);
+  }
+
   addClient(forQuery: TripQuery, onUpdate: TripUpdateFunction) {
     const clientEmitter = new EventEmitter();
     clientEmitter.on('update', onUpdate);
@@ -66,10 +74,12 @@ export class TripObserver {
     // First client instantiating, create the trip worker.
     if (Object.keys(existingClients).length === 0) {
       winston.info(`Adding new trip worker for query ${forQuery.outboundStation} to ${forQuery.inboundStation} on ${forQuery.departureDate}. Starting polling...`);
-      const worker = new TripWorker(this.fetchFunction);
+      const worker = new TripWorker(this.tripProvider.fetchTrips);
+      this.tripProvider.onInstantiateWorker(forQuery);
       worker.emitter.on('update', this.updateHandler);
       this.tripWorkers.set(forQuery, worker);
       worker.startPolling(forQuery);
+      this.emitter.emit('trip_worker_created', forQuery, worker);
       this.clientEmitters.set(forQuery, {0: clientEmitter});
       return 0;
     }

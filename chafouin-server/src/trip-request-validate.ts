@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
-import { TripRequest } from "./trip-request";
-import { TripQuery } from "./trip-query";
+import { TripRequest } from "./trip-request.js";
+import { TripQuery } from "../../chafouin-shared/trip-query.js";
 import winston from "winston";
 
 export const validateTripRequest = (validStations: string[]) =>
