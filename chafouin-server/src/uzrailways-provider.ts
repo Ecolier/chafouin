@@ -22,8 +22,8 @@ export class UZRWTripProvider implements TripProvider {
   
   onInstantiateWorker(query: TripQuery): void {
     const count = this.torAgents.length;
-    fs.writeFileSync(`/usr/local/etc/tor/torrc.${count}`, torrc(9050 + (10 * count), 9051 + (10 * count), count));
-    exec(`tor -f /usr/local/etc/tor/torrc.${count}`);
+    fs.writeFileSync(`/etc/tor/torrc.${count}`, torrc(9050 + (10 * count), 9051 + (10 * count), count));
+    exec(`tor -f /etc/tor/torrc.${count}`);
     this.torAgents.push([query, new SocksProxyAgent(`socks5h://127.0.0.1:${9050 + (10 * count)}`)]);
     winston.info(`Added agent no. ${count} for ${query.outboundStation} - ${query.inboundStation}`);
   }
