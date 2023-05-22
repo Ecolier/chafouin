@@ -16,20 +16,16 @@ subscribeScene.enter(ctx => {
 
   const {inbound, outbound, date} = ctx.scene.state as any;
 
-  let message = '';
-  
-  if (Object.keys(ctx.scene.state).length === 0) {
-    message += '👀 First, let\'s look for a trip\\!';
-  }
+  let message = '🚅 *Let\'s search for a trip\\.*\n\n';
   
   if (outbound) {
-    message += `\n🏠 From *${outbound}*\\.`
+    message += `🏠 From *${outbound}*\n`
   }
   if (inbound) {
-    message += `\n📍 To *${inbound}*\\.`
+    message += `📍 To *${inbound}*\n`
   }
   if (date) {
-    message += `\n📆 On the *${new Date(date).toLocaleDateString('fr-FR')}*\\.`
+    message += `📆 On the *${new Date(date).toLocaleDateString('fr-FR')}*\n`
   }
 
   let keyboard = [
@@ -71,7 +67,12 @@ subscribeScene.action('@search', (ctx) => {
     }
     ctx.telegram.sendMessage(ctx.chat.id, msg);
   })
-  ctx.reply('✅ Your subscription request was registered.');
+  ctx.replyWithMarkdownV2(`✅ *Subscription registered\\!*\n\nI'll notify you once new seats are available\\. Would you like to search for another trip\\?`, {reply_markup: {
+    resize_keyboard: true, 
+    inline_keyboard: [
+      [{text: '⏰ Search for a trip', callback_data: '@subscribe'}]
+    ]
+  }});
 });
 
 subscribeScene.action(/@save(?:\((.*)\))?/, ctx => {
@@ -157,19 +158,29 @@ subscribeScene.action(/@selectDate(?:\((\d+)\,\s?(\d+)\,\s?(\d+)\))?/, ctx => {
 
     if (index >= firstDayWhen - 1 && index < numDaysInMonth + firstDayWhen - 1) {
       const day = (index + 1) - (firstDayWhen - 1);
-      cal[row].push({ text: `${day}`, callback_data: `@save({"date": "${currentYear}-${date.getMonth() + 1}-${day}"})` });
+      if (date.getMonth() === new Date().getMonth()) {
+        if (day < new Date().getDate()) {
+          return cal[row].push({ text: ` `, callback_data: `@nothing` });
+        }
+      }
+      return cal[row].push({ text: `${day}`, callback_data: `@save({"date": "${currentYear}-${date.getMonth() + 1}-${day}"})` });
     } else {
-      cal[row].push({ text: ` `, callback_data: '@nothing' });
+      return cal[row].push({ text: ` `, callback_data: '@nothing' });
     }
   });
 
+  const monthsKeyboard = [
+    {text: currentMonth, callback_data: 'now' },
+    {text: `${nextMonth} ➡️`, callback_data: `@selectDate(${date.getDate()}, ${date.getMonth() + 1}, ${date.getFullYear()})` }
+  ];
+
+  if (date.getMonth() > new Date().getMonth()) {
+    monthsKeyboard.splice(0, 0, {text: `⬅️ ${lastMonth}`, callback_data: `@selectDate(${date.getDate()}, ${date.getMonth() - 1}, ${date.getFullYear()})` })
+  }
+
   ctx.editMessageReplyMarkup({
     inline_keyboard: [
-      [
-        {text: `👈 ${lastMonth}`, callback_data: `@selectDate(${date.getDate()}, ${date.getMonth() - 1}, ${date.getFullYear()})` },
-        {text: currentMonth, callback_data: 'now' },
-        {text: `${nextMonth} 👉`, callback_data: `@selectDate(${date.getDate()}, ${date.getMonth() + 1}, ${date.getFullYear()})` }
-      ],
+      monthsKeyboard,
       days.map(day => ({ text: day, callback_data: 'sef' })),
       ...cal
     ]
