@@ -1,10 +1,8 @@
 import {EventEmitter} from "events";
 import {Trip} from "../../chafouin-shared/trip.js";
 import {TripQuery, areTripQueriesEqual} from "../../chafouin-shared/trip-query.js";
-import {FetchTripFunction, TripUpdateFunction, TripWorker } from "./trip-worker.js";
+import {TripUpdateFunction, TripWorker } from "./trip-worker.js";
 import winston from "winston";
-import { torrc } from "./tor.js";
-import * as fs from 'fs'
 import { TripProvider } from "./provider.js";
 
 export interface TripObserverOptions {

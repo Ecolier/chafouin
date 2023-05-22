@@ -1,0 +1,9 @@
+{
+  "name": "chafouin-shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "author": "Evan Gruère <evan.gruere@gmail.com>",
+  "license": "MIT",
+  "private": true
+}

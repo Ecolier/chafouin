@@ -1,18 +1,14 @@
-require('dotenv').config();
-import { request } from "https";
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { Telegraf, session, Scenes, Context } from "telegraf";
-import EventSource from 'eventsource';
-import { SceneContext, WizardContext } from "telegraf/typings/scenes";
-import { BotContext } from "./context";
-import { subscribeScene, subscribeSceneToken } from "./subscribe";
-import { TripSchedule } from "../../chafouin-shared/trip";
+import { BotContext } from "./context.js";
+import { subscribeScene, subscribeSceneToken } from "./subscribe.js";
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 if (!TELEGRAM_BOT_TOKEN) {
   throw Error('TELEGRAM_BOT_TOKEN must be set.');
 }
-
-const CHAFOUIN_BASE_URL = 'http://localhost:8080';
 
 const stage = new Scenes.Stage<BotContext>([subscribeScene])
 const telegramBot = new Telegraf<BotContext>(TELEGRAM_BOT_TOKEN);
@@ -31,6 +27,7 @@ telegramBot.start(ctx => {
 });
 
 telegramBot.action('@subscribe', (ctx) => ctx.scene.enter(subscribeSceneToken));
+telegramBot.command('subscribe', (ctx) => ctx.scene.enter(subscribeSceneToken));
 
 telegramBot.launch();
 
