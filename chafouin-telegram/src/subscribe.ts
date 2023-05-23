@@ -83,7 +83,10 @@ export const subscribeScene = (redisClient: RedisClient) => {
 
     savedSubscriptions.set(user, subs);
 
-    console.log(user, subs);
+    const usr = await redisClient.json.get(`user:${user}`);
+    if (!usr) {
+      redisClient.json.set(`user:${user}`, '$', {});
+    }
     redisClient.json.set(`user:${user}`, '.alerts', subs.map(([sch, ]) => sch) as any[]);
     
     source.addEventListener('update', function (event) {
