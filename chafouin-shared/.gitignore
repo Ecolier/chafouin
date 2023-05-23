@@ -1,7 +1,5 @@
 lib/
 
-yarn-offline-mirror/
-
 .cache/
 
 # Logs

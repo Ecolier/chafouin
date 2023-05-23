@@ -13,7 +13,7 @@ services:
       - ./chafouin-shared:/usr/src/chafouin-shared
     expose:
       - "8080:8080"
-    command: "npm start"
+    command: "npm run watch"
   telegram:
     image: "node:20-alpine"
     user: "node"
@@ -22,9 +22,9 @@ services:
     volumes:
       - ./chafouin-telegram:/usr/src/app
       - ./chafouin-shared:/usr/src/chafouin-shared
-    command: "npm start"
+    command: "npm run watch"
   telegram-cache:
-    image: redis/redis-stack-server:6.2.6-v7
+    image: redis/redis-stack:6.2.6-v7
     restart: always
     ports:
       - '6379:6379'

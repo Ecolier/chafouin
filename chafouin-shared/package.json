@@ -9,10 +9,9 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "postinstall": "yarn build",
-    "build": "yarn tsc"
+    "build": "tsc"
   },
-  "dependencies": {
+  "devDependencies": {
     "typescript": "^5.0.4"
   }
 }
