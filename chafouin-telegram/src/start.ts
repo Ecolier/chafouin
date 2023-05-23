@@ -8,7 +8,7 @@ async (ctx: SceneContext) => {
       resize_keyboard: true, 
       inline_keyboard: [
         [{text: '⏰ Search for a trip', callback_data: '@subscribe'}],
-        [{text: '🔔 Your subscriptions', callback_data: '@alert'}],
+        [{text: '🔔 Your subscriptions', callback_data: '@alerts'}],
       ]
     }
   });
