@@ -56,7 +56,7 @@ export const subscribeScene = (redisClient: RedisClient) => {
     if (Object.keys(ctx.scene.state).length !== 0 && ctx.updateType === 'callback_query') {
       return ctx.editMessageText(message, markup);
     } 
-    return ctx.sendMessage(message, markup);
+    return ctx.replyWithMarkdownV2(message, markup);
     
   });
   

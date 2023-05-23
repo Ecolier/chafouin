@@ -31,6 +31,15 @@ export const alertScene = (redisClient: RedisClient) => {
       ])]
     } 
 
+    if (ctx.updateType === 'callback_query') {
+      return ctx.editMessageText(`🔔 *Manage your alerts\\.*\n\n${message}`, {
+        parse_mode: 'MarkdownV2',
+        reply_markup: {
+          inline_keyboard: keyboard
+        }
+      });
+    }
+
     return ctx.replyWithMarkdownV2(`🔔 *Manage your alerts\\.*\n\n${message}`, {
       reply_markup: {
         inline_keyboard: keyboard
