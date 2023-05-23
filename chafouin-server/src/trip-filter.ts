@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { TripUpdate } from "../../chafouin-shared/trip.js";
+import { TripUpdate } from 'chafouin-shared';
 import { TripRequest } from "./trip-request";
 import winston from "winston";
 

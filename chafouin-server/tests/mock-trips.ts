@@ -1,5 +1,4 @@
-import { Trip } from "../../chafouin-shared/trip";
-import { TripQuery } from "../../chafouin-shared/trip-query";
+import { Trip, TripSchedule } from 'chafouin-shared'
 
 function weightedRandom(specs: {[key: number]: number}) {
   let i, sum = 0;
@@ -10,7 +9,7 @@ function weightedRandom(specs: {[key: number]: number}) {
   }
 }
 
-export function mockTrips(forQuery: TripQuery, count: number): [Trip[], Trip[]] {
+export function mockTrips(forQuery: TripSchedule, count: number): [Trip[], Trip[]] {
   return [...new Array(2)].reduce((prev, curr, index) => 
     [...prev,[...new Array(count)].reduce((prevTrips, currTrips, tripIndex) => {
       let type = prev[index - 1]?.[tripIndex]?.trainType;

@@ -1,9 +1,8 @@
 import { EventEmitter } from 'events';
-import { Trip, TripUpdate } from "../../chafouin-shared/trip.js";
-import { TripQuery } from '../../chafouin-shared/trip-query.js';
+import { Trip, TripUpdate, TripSchedule } from 'chafouin-shared';
 import winston from 'winston';
 
-export type FetchTripFunction = (query: TripQuery) => Promise<Trip[]>;
+export type FetchTripFunction = (query: TripSchedule) => Promise<Trip[]>;
 export type TripUpdateFunction = (updatedTrips: Trip[]) => void;
 
 export class TripWorker {
@@ -14,7 +13,7 @@ export class TripWorker {
 
   constructor(private fetchFunction: FetchTripFunction) {}
 
-  private poll = (withQuery: TripQuery): NodeJS.Timeout => {
+  private poll = (withQuery: TripSchedule): NodeJS.Timeout => {
     this.fetchFunction(withQuery).then(trips => {
       const filteredTrips = trips.map<Trip | TripUpdate>((trip) => {
         const cachedTrip = this.tripsCache.find((cachedTrip) => trip.trainId === cachedTrip.trainId);
@@ -30,7 +29,7 @@ export class TripWorker {
     return setTimeout(this.poll.bind(this, withQuery), 60000);
   }
 
-  startPolling(withQuery: TripQuery) {
+  startPolling(withQuery: TripSchedule) {
     this.processId = this.poll(withQuery);
   }
 

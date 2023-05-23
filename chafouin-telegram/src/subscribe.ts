@@ -1,16 +1,15 @@
 import { Scenes } from "telegraf";
-import { UZRW_STATIONS } from '../../chafouin-shared/uzrailways/stations.js';
-import { TripSchedule, TripUpdate } from '../../chafouin-shared/trip.js';
+import { TripUpdate, UzbekistanRailways } from 'chafouin-shared';
 import { BotContext } from "./context.js";
 import { InlineKeyboardButton, ParseMode } from "telegraf/typings/core/types/typegram";
 import EventSource from 'eventsource';
 
-const availableStations = Object.values(UZRW_STATIONS);
+const availableStations = Object.values(UzbekistanRailways.stations);
 
 export const subscribeSceneToken = 'CHFN_SUBSCRIBE_SCENE';
 export const subscribeScene = new Scenes.BaseScene<BotContext>(subscribeSceneToken);
 
-const CHAFOUIN_BASE_URL = 'http://localhost:8080';
+const CHAFOUIN_BASE_URL = 'http://chafouin-server:8080';
 
 subscribeScene.enter(ctx => {
 

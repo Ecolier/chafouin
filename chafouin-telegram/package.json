@@ -7,6 +7,7 @@
   "type": "module",
   "private": true,
   "dependencies": {
+    "chafouin-shared": "file:../chafouin-shared",
     "@microsoft/fetch-event-source": "^2.0.1",
     "debug": "^4.3.4",
     "dotenv": "^16.0.3",
@@ -17,7 +18,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "run": "node ./dist/chafouin-telegram/src/index.js"
+    "start": "tsc && node ./dist/index.js"
   },
   "devDependencies": {
     "@types/eventsource": "^1.1.11",

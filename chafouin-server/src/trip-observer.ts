@@ -1,6 +1,5 @@
 import {EventEmitter} from "events";
-import {Trip} from "../../chafouin-shared/trip.js";
-import {TripQuery, areTripQueriesEqual} from "../../chafouin-shared/trip-query.js";
+import {Trip, TripSchedule, tripScheduleEquals} from "chafouin-shared"
 import {TripUpdateFunction, TripWorker } from "./trip-worker.js";
 import winston from "winston";
 import { TripProvider } from "./provider.js";
@@ -12,11 +11,11 @@ export interface TripObserverOptions {
 type Clients = {[id: string]: EventEmitter};
 
 export class TripObserver {
-  private readonly tripWorkers = new Map<TripQuery, TripWorker>();
-  private readonly clientEmitters = new Map<TripQuery, Clients>();
+  private readonly tripWorkers = new Map<TripSchedule, TripWorker>();
+  private readonly clientEmitters = new Map<TripSchedule, Clients>();
   private readonly emitter = new EventEmitter();
 
-  private updateHandler = (forQuery: TripQuery, updatedTrips: Trip[], outdatedTrips: Trip[]) => {
+  private updateHandler = (forQuery: TripSchedule, updatedTrips: Trip[], outdatedTrips: Trip[]) => {
     const clients = this.getClients(forQuery);
     Object.entries(clients).forEach(([clientId, emitter]) => {
       winston.info(`sending update to client ${clientId}, registered for query ${forQuery.outboundStation} - ${forQuery.inboundStation}, on ${forQuery.departureDate}`);
@@ -30,41 +29,41 @@ export class TripObserver {
     interval: 60000,
   }) {}
 
-  private getWorker(forQuery: TripQuery) {
+  private getWorker(forQuery: TripSchedule) {
     let foundWorker: TripWorker | undefined;
     this.tripWorkers.forEach((worker, query) => {
-      if (areTripQueriesEqual(query, forQuery)) {
+      if (tripScheduleEquals(query, forQuery)) {
         foundWorker = worker
       }
     });
     return foundWorker;
   }
 
-  private getClients(forQuery: TripQuery) {
+  private getClients(forQuery: TripSchedule) {
     let foundClients: Clients = {}
     this.clientEmitters.forEach((clients, query) => {
-      if (areTripQueriesEqual(query, forQuery)) {
+      if (tripScheduleEquals(query, forQuery)) {
         foundClients = clients
       }
     });
     return foundClients;
   }
 
-  private getClientCount(forQuery: TripQuery) {
+  private getClientCount(forQuery: TripSchedule) {
     let count = -1;
     this.clientEmitters.forEach((clients, query) => {
-      if (areTripQueriesEqual(query, forQuery)) {
+      if (tripScheduleEquals(query, forQuery)) {
         count = Object.keys(clients).length;
       }
     });
     return count;
   }
 
-  onTripWorkerCreated(tripWorkerCreatedFn: (forQuery: TripQuery, worker: TripWorker) => void) {
+  onTripWorkerCreated(tripWorkerCreatedFn: (forQuery: TripSchedule, worker: TripWorker) => void) {
     this.emitter.on('trip_worker_created', tripWorkerCreatedFn);
   }
 
-  addClient(forQuery: TripQuery, onUpdate: TripUpdateFunction) {
+  addClient(forQuery: TripSchedule, onUpdate: TripUpdateFunction) {
     const clientEmitter = new EventEmitter();
     clientEmitter.on('update', onUpdate);
     const existingClients = this.getClients(forQuery);
@@ -87,7 +86,7 @@ export class TripObserver {
     return clientId;
   }
 
-  removeClient(forQuery: TripQuery, clientId: number) {
+  removeClient(forQuery: TripSchedule, clientId: number) {
     winston.info(`Removing client with id. ${clientId} for query ${forQuery.outboundStation} to ${forQuery.inboundStation} on ${forQuery.departureDate}.`);
     let existingClients = this.getClients(forQuery);
     const {[clientId]: _, ...rest} = existingClients;

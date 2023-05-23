@@ -1,5 +1,5 @@
 import { SceneContext, SceneSessionData } from "telegraf/typings/scenes";
-import { Trip, TripSchedule } from "../../chafouin-shared/trip.js";
+import { TripSchedule } from 'chafouin-shared'
 
 export interface SubscribeSceneSessionData extends SceneSessionData {
   searchQuery: TripSchedule;

@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "module": "ES6",
+    "lib": ["ES2023"],
+    "target": "ES6",
+    "strict": true,
+    "moduleResolution": "node",
+		"allowSyntheticDefaultImports": true,
+    "outDir": "lib/",
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/"
+  ],
+  "exclude": ["node_modules/"]
+}

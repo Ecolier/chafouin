@@ -1,8 +1,7 @@
-import { Trip } from "../../chafouin-shared/trip";
-import { TripQuery } from "../../chafouin-shared/trip-query";
+import { Trip, TripSchedule } from 'chafouin-shared';
 
 export interface TripProvider {
-  onInstantiateWorker(withQuery: TripQuery): void;
-  fetchTrips(query: TripQuery): Promise<Trip[]>;
+  onInstantiateWorker(withQuery: TripSchedule): void;
+  fetchTrips(query: TripSchedule): Promise<Trip[]>;
   availableStations: string[];
 }

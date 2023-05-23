@@ -4,5 +4,5 @@ import { FetchTripFunction } from "./trip-worker.js";
 
 export const searchTripRouter = (validStations: string[], fetchTripFunction: FetchTripFunction) => 
 Router().get('/search', validateTripRequest(validStations), async (_, res) => {
-  return res.send(await fetchTripFunction(res.locals.tripQuery));
+  return res.send(await fetchTripFunction(res.locals.tripSchedule));
 });

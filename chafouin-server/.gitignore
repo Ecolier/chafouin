@@ -1,4 +1,9 @@
 .DS_Store
+dist/
+
+yarn-offline-mirror/
+
+.cache/
 
 # Logs
 logs

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Trip, TripUpdate } from '../../chafouin-shared/trip.js';
+import { Trip, TripUpdate } from 'chafouin-shared';
 import { filterTrips, parseTripFilters } from './trip-filter.js';
 import { validateTripRequest } from './trip-request-validate.js';
 import { TripObserver } from './trip-observer.js';
@@ -9,7 +9,7 @@ Router().get('/subscribe',
 validateTripRequest(validStations),
 parseTripFilters,
 async (req, res) => {
-  const query = res.locals.tripQuery;
+  const query = res.locals.tripSchedule;
   const filters = res.locals.tripFilters;
 
   res.writeHead(200, {

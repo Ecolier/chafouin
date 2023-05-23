@@ -1,9 +1,8 @@
 
-import { Trip, TripUpdate } from "../../chafouin-shared/trip";
-import { TripQuery } from "../../chafouin-shared/trip-query";
+import { TripSchedule, TripUpdate } from 'chafouin-shared'
 import { mockTrips } from "./mock-trips";
 
-const query: TripQuery = {
+const query: TripSchedule = {
   outboundStation: 'tashkent',
   inboundStation: 'samarkand',
   departureDate: '2023-05-25'
@@ -26,5 +25,3 @@ const filteredTrips = updatedTrips.reduce<TripUpdate[]>((prev, curr) => {
     updates
   ]
 }, []);
-
-console.log(filteredTrips);

@@ -1,13 +1,10 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
-import {TripQuery} from "../../chafouin-shared/trip-query.js";
-import {Trip} from "../../chafouin-shared/trip.js";
+import {TripSchedule, Trip, UzbekistanRailways} from 'chafouin-shared';
 import winston from 'winston';
 import fetch from 'node-fetch';
 import { TripProvider } from './provider.js';
 import { SocksProxyAgent } from 'socks-proxy-agent';
-import { UZRW_STATIONS } from '../../chafouin-shared/uzrailways/stations.js';
-import { UZRWTripsResponse } from '../../chafouin-shared/uzrailways/trips-response.js';
 import fs from 'fs';
 import { torrc } from './tor.js';
 import { exec } from 'child_process';
@@ -17,10 +14,10 @@ const UZRAILWAYS_TRAINS_ENDPOINT = "/api/v1/trains/availability/space/between/st
 
 export class UZRWTripProvider implements TripProvider {
   
-  private torAgents: [query: TripQuery, agent: SocksProxyAgent][] = [];
-  availableStations = Object.values(UZRW_STATIONS);
+  private torAgents: [query: TripSchedule, agent: SocksProxyAgent][] = [];
+  availableStations = Object.values(UzbekistanRailways.stations);
   
-  onInstantiateWorker(query: TripQuery): void {
+  onInstantiateWorker(query: TripSchedule): void {
     const count = this.torAgents.length;
     fs.writeFileSync(`/etc/tor/torrc.${count}`, torrc(9050 + (10 * count), 9051 + (10 * count), count));
     exec(`tor -f /etc/tor/torrc.${count}`);
@@ -28,7 +25,7 @@ export class UZRWTripProvider implements TripProvider {
     winston.info(`Added agent no. ${count} for ${query.outboundStation} - ${query.inboundStation}`);
   }
   
-  fetchTrips = async (tripQuery: TripQuery): Promise<Trip[]> => {
+  fetchTrips = async (tripQuery: TripSchedule): Promise<Trip[]> => {
     const {inboundStation, outboundStation, departureDate} = tripQuery;
     const formattedDate = new Date(departureDate).toLocaleDateString("fr-FR").replaceAll("/", ".");
 
@@ -49,8 +46,8 @@ export class UZRWTripProvider implements TripProvider {
               type: "Forward",
             },
           ],
-          stationFrom: Object.keys(UZRW_STATIONS).find((stationId) => UZRW_STATIONS[stationId].toUpperCase() === outboundStation.toUpperCase()),
-          stationTo: Object.keys(UZRW_STATIONS).find((stationId) => UZRW_STATIONS[stationId].toUpperCase() === inboundStation.toUpperCase()),
+          stationFrom: Object.keys(UzbekistanRailways.stations).find((stationId) => UzbekistanRailways.stations[stationId].toUpperCase() === outboundStation.toUpperCase()),
+          stationTo: Object.keys(UzbekistanRailways.stations).find((stationId) => UzbekistanRailways.stations[stationId].toUpperCase() === inboundStation.toUpperCase()),
           detailNumPlaces: 1,
           showWithoutPlaces: 0,
         }),
@@ -66,7 +63,7 @@ export class UZRWTripProvider implements TripProvider {
       return [];
     }
     
-    const content = await response.json() as UZRWTripsResponse;
+    const content = await response.json() as UzbekistanRailways.TripsResponse;
     
     const trips = content.express?.direction?.[0].trains?.[0].train;
     if (!trips) {
