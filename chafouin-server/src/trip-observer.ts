@@ -63,9 +63,13 @@ export class TripObserver {
     this.emitter.on('trip_worker_created', tripWorkerCreatedFn);
   }
 
-  addClient(forQuery: TripSchedule, onUpdate: TripUpdateFunction) {
-    const clientEmitter = new EventEmitter();
-    clientEmitter.on('update', onUpdate);
+  onTripUpdate(forQuery: TripSchedule, clientId: number, tripUpdateFn: TripUpdateFunction) {
+    const clients = this.getClients(forQuery);
+    clients[clientId].on('update', tripUpdateFn);
+  }
+
+  addClient(forQuery: TripSchedule, channel?: number) {
+    
     const existingClients = this.getClients(forQuery);
     
     // First client instantiating, create the trip worker.
@@ -77,24 +81,49 @@ export class TripObserver {
       this.tripWorkers.set(forQuery, worker);
       worker.startPolling(forQuery);
       this.emitter.emit('trip_worker_created', forQuery, worker);
-      this.clientEmitters.set(forQuery, {0: clientEmitter});
+      this.clientEmitters.set(forQuery, {0: new EventEmitter()});
       return 0;
     }
-    const clientId = Object.keys(existingClients).length;
-    this.clientEmitters.set(forQuery, {[clientId]: clientEmitter, ...existingClients});
+    const clientId = channel ?? Object.keys(existingClients).length;
+    this.clientEmitters.set(forQuery, {[clientId]: new EventEmitter(), ...existingClients});
     winston.info(`Added new client with id. ${clientId} for query ${forQuery.outboundStation} to ${forQuery.inboundStation} on ${forQuery.departureDate}.`);
     return clientId;
+  }
+
+  onTripWorkerDestroyed(fn: (query: TripSchedule, clientId: number) => void) {
+    this.emitter.addListener('trip_worker_destroyed', fn);
+  }
+
+  onRemoveClient(fn: (query: TripSchedule, clientId: number) => void) {
+    this.emitter.addListener('remove_client', fn);
+  }
+
+  removeAllClients() {
+    Array.from(this.clientEmitters.entries()).forEach(([schedule, clients]) => {
+      Object.keys(clients).forEach(clientId => {
+        this.removeClient(schedule, parseInt(clientId));
+      })
+    });
   }
 
   removeClient(forQuery: TripSchedule, clientId: number) {
     winston.info(`Removing client with id. ${clientId} for query ${forQuery.outboundStation} to ${forQuery.inboundStation} on ${forQuery.departureDate}.`);
     let existingClients = this.getClients(forQuery);
+
+    // Destroy the client
+    this.emitter.emit('remove_client', forQuery, clientId);
+    existingClients[clientId].removeAllListeners('update');
     const {[clientId]: _, ...rest} = existingClients;
     existingClients = rest;
+    this.clientEmitters.set(forQuery, existingClients);
+
+    // If there are no more clients left, destroy the worker as well
     if (Object.keys(existingClients).length === 0) {
       winston.info(`Removing last client for query ${forQuery.outboundStation} to ${forQuery.inboundStation} on ${forQuery.departureDate}. Stopping polling...`);
-      this.getWorker(forQuery)?.stopPolling();
+      const worker = this.getWorker(forQuery);
+      worker?.stopPolling();
+      worker?.emitter.removeAllListeners('update');
+      this.emitter.emit('trip_worker_destroyed', forQuery, clientId);
     }
-    this.clientEmitters.set(forQuery, existingClients);
   }
 }

@@ -6,16 +6,15 @@ import winston from 'winston';
 import start from './start.js'
 
 import { Telegraf, session, Scenes, Context } from "telegraf";
-import { subscribeScene, subscribeSceneId } from "./subscribe.js";
-import { alertScene, alertSceneId } from './alert.js';
+import { formatAlert, subscribeScene, subscribeSceneId } from "./subscribe.js";
+import { alertScene, alertSceneId } from './alerts-menu.js';
 
 import { createRedisClient } from './redis.js';
-import { SceneContext, SceneSessionData } from 'telegraf/typings/scenes/context.js';
-import { Trip, TripSchedule } from 'chafouin-shared';
-import { ScheduleSource, savedSubscriptions } from './subscription.js';
-import EventSource from 'eventsource';
+import { SceneContext } from 'telegraf/typings/scenes/context.js';
+import fetch from 'node-fetch';
 
-const CHAFOUIN_BASE_URL = 'http://scraper:8080';
+import * as alerts from './alerts.js';
+import { formatTripSchedule } from './format-trip-schedule.js';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 if (!TELEGRAM_BOT_TOKEN) {
@@ -65,41 +64,28 @@ for await (const key of redisClient.scanIterator({
   MATCH: 'user:*',
 })) {
   const userId = parseInt(key.split(':')[1]);
-  let alerts: TripSchedule[] = [];
+  let savedUser: any = {};
   try {
-    alerts = await redisClient.json.get(key, {path: '.alerts'}) as unknown as TripSchedule[];
+    savedUser = await redisClient.json.get(key) as any;
   } catch (error) {
-    winston.info(`No subscriptions to restore for user ${userId}`);
+    winston.info(`No alerts to restore for user ${userId}`);
   }
-  const subscriptions = alerts.reduce<ScheduleSource[]>((prev, curr) => [
-    ...prev, [
-      curr,
-      new EventSource(encodeURI(`${CHAFOUIN_BASE_URL}/subscribe?outbound=${curr.outboundStation}&inbound=${curr.inboundStation}&seats=true&date=${curr.departureDate}`))]
-  ], []);
-  winston.info(`Restore ${subscriptions.length} subscriptions for user ${userId}`);
-  savedSubscriptions.set(userId, subscriptions);
+  (savedUser.alerts as any[]).forEach(async savedAlert => {
+    winston.info(`Restored alert for user ${userId} in chat ${parseInt(savedUser.chatId)} for ${formatTripSchedule(savedAlert.schedule)} on channel ${savedAlert.channelId}`);
+    alerts.subscribe(userId, parseInt(savedUser.chatId), savedAlert.schedule, redisClient, savedAlert.channelId)
+    .onUpdate((trips) => telegramBot.telegram.sendMessage(parseInt(savedUser.chatId), formatAlert(trips)));
+  });
 }
 
 await telegramBot.launch();
 winston.info(`Launched Telegram bot`);
 
-const cleanSavedSubscriptions = () => {
-  Array.from(savedSubscriptions.entries()).forEach(([userId, scheduleSource]) => {
-    scheduleSource.forEach(([_, source]) => {
-      winston.info(`Closing source for ${userId}`);
-      source.close();
-    });
-  });
-}
-
 process.once('SIGINT', () => {
-  cleanSavedSubscriptions();
   redisClient.disconnect();
   telegramBot.stop('SIGINT');
 });
 
 process.once('SIGTERM', () => {
-  cleanSavedSubscriptions();
   redisClient.disconnect();
   telegramBot.stop('SIGTERM');
 });

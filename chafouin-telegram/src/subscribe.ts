@@ -1,15 +1,18 @@
 import { Scenes } from "telegraf";
-import { TripUpdate, UzbekistanRailways, tripScheduleEquals } from 'chafouin-shared';
+import { TripSchedule, TripUpdate, UzbekistanRailways, tripScheduleEquals } from 'chafouin-shared';
 import { InlineKeyboardButton, ParseMode } from "telegraf/typings/core/types/typegram";
 import EventSource from 'eventsource';
-import config from './config.js';
 import winston from "winston";
 import { RedisClient } from "./redis.js";
 import SceneContextScene, { SceneContext, SceneSession, SceneSessionData } from "telegraf/typings/scenes/context.js";
-import { TripSchedule } from "chafouin-shared";
-import { ScheduleSource, savedSubscriptions } from "./subscription.js";
+import * as alerts from './alerts.js';
+import { formatTripSchedule } from "./format-trip-schedule.js";
 
-const CHAFOUIN_BASE_URL = 'http://scraper:8080';
+export function formatAlert(trips: TripUpdate[]) {
+  return trips.reduce((prev, curr) => {
+    return prev + `${typeof curr.freeSeats === 'object' ? `${curr.freeSeats.previous} to ${curr.freeSeats.current}` : curr.freeSeats} seats on ${curr.trainId} (${curr.trainType}).\n`
+  }, `${formatTripSchedule(trips[0])}\n\n`);
+}
 
 const availableStations = Object.values(UzbekistanRailways.stations);
 
@@ -61,54 +64,44 @@ export const subscribeScene = (redisClient: RedisClient) => {
   });
   
   scene.action('@search', async (ctx) => {
+    const userId = ctx.callbackQuery?.from.id;
     const {inbound: inboundStation, outbound: outboundStation, date: departureDate, user} = ctx.scene.state as any;
-    const source = new EventSource(encodeURI(`${CHAFOUIN_BASE_URL}/subscribe?outbound=${outboundStation}&inbound=${inboundStation}&seats=true&date=${departureDate}`));
 
-    const schedule = {
-      inboundStation, outboundStation, departureDate
-    } as TripSchedule;
+    const schedule: TripSchedule = {
+      inboundStation,
+      outboundStation,
+      departureDate
+    };
 
-    const subscriptions = savedSubscriptions.get(user);
-    let subs: ScheduleSource[] = [];
-    if (!subscriptions) {
-      subs.push([schedule, source]);
-    } else {
-      const foundScheduleIndex = subscriptions.findIndex(([foundSchedule, _]) => tripScheduleEquals(schedule, foundSchedule));
-      if (foundScheduleIndex !== -1) {
-        subs[foundScheduleIndex] = [schedule, source];
-      } else {
-        subs = [...subscriptions, [schedule, source]];
-      }
+    const chatId = ctx.chat?.id;
+    if (!chatId) {
+      return;
+    }
+    
+    let savedAlert = await redisClient.json.get(
+      `user:${userId}`, {path: '.alerts'}
+    ) as any[];
+    
+    if (savedAlert && savedAlert.find(alert => tripScheduleEquals(schedule, alert.schedule))) {
+      winston.info(`User ${userId} is already subscribed to ${formatTripSchedule(schedule)}, aborting subscription`);
+      ctx.replyWithMarkdownV2(`⚠️ *Already subscribed\\!*\n\nI'm already notifying you for new seats on this trip\\. Would you like to search for another trip\\?`, {reply_markup: {
+        inline_keyboard: [
+          [{text: '⏰ Search for another trip', callback_data: '@subscribe'}]
+        ]
+      }});
     }
 
-    savedSubscriptions.set(user, subs);
-
-    const usr = await redisClient.json.get(`user:${user}`);
-    if (!usr) {
-      redisClient.json.set(`user:${user}`, '$', {});
+    else {
+      alerts.subscribe(userId, chatId, { inboundStation, outboundStation, departureDate }, redisClient)
+      .onUpdate((trips) => ctx.telegram.sendMessage(chatId, formatAlert(trips)));
+      
+      ctx.replyWithMarkdownV2(`✅ *Subscription registered\\!*\n\nI'll notify you once new seats are available\\. Would you like to search for another trip\\?`, {reply_markup: {
+        inline_keyboard: [
+          [{text: '⏰ Search for another trip', callback_data: '@subscribe'}]
+        ]
+      }});
     }
-    redisClient.json.set(`user:${user}`, '.alerts', subs.map(([sch, ]) => sch) as any[]);
     
-    source.addEventListener('update', function (event) {
-      const updatedTrips = JSON.parse(event.data) as TripUpdate[];
-      const message = updatedTrips.reduce((prev, curr) => {
-        return prev + `${typeof curr.freeSeats === 'object' ? `${curr.freeSeats.previous} to ${curr.freeSeats.current}` : curr.freeSeats} seats on ${curr.trainId} (${curr.trainType}).\n`
-      }, `${new Date(updatedTrips[0].departureDate).toLocaleDateString('fr-FR')} ${updatedTrips[0].outboundStation.substring(0, 3).toUpperCase()} - ${updatedTrips[0].inboundStation.substring(0, 3).toUpperCase()}\n\n`);
-      if (!ctx.chat?.id) {
-        winston.info(`No chat id, closing source`);
-        source.close();
-        return;
-      }
-      ctx.telegram.sendMessage(ctx.chat.id, message);
-    })
-    
-    ctx.replyWithMarkdownV2(`✅ *Subscription registered\\!*\n\nI'll notify you once new seats are available\\. Would you like to search for another trip\\?`, {reply_markup: {
-      resize_keyboard: true, 
-      inline_keyboard: [
-        [{text: '⏰ Search for a trip', callback_data: '@subscribe'}]
-      ]
-    }});
-
     return ctx.scene.leave();
   });
   

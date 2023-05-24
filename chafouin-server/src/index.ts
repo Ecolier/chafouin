@@ -8,6 +8,7 @@ import { UZRWTripProvider } from "./uzrailways-provider.js";
 import { TripObserver } from './trip-observer.js';
 import { subscribeTripRouter } from './trip-subscribe.js';
 import { searchTripRouter } from './trip-search.js';
+import { unSubscribeTripRouter } from './trip-unsubscribe.js';
 
 winston.configure({
   level: 'info',
@@ -29,6 +30,7 @@ const tripObserver = new TripObserver(tripProvider);
 
 const app = express();
 app.use(subscribeTripRouter(tripObserver, tripProvider.availableStations));
+app.use(unSubscribeTripRouter(tripObserver, tripProvider.availableStations));
 app.use(searchTripRouter(tripProvider.availableStations, tripProvider.fetchTrips));
 
 app.listen(8080, () => {

@@ -16,6 +16,8 @@ services:
     command: "npm run watch"
   telegram:
     image: "node:20-alpine"
+    environment:
+      - SCRAPER_BASE_URL=http://scraper:8080
     user: "node"
     working_dir: /usr/src/app
     restart: always

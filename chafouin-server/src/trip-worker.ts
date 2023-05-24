@@ -34,6 +34,8 @@ export class TripWorker {
   }
 
   stopPolling() {
+    this.emitter.removeAllListeners('update');
     clearTimeout(this.processId);
+    console.log('cleared', this.processId);
   }
 }
