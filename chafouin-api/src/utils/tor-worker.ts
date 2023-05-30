@@ -37,7 +37,7 @@ export default <T extends unknown[], U extends unknown[]> (
       fs.mkdirSync(torDir, { recursive: true });
     }
     fs.writeFileSync(torrcFileDir, torrc(agentPort, controlPort, process));
-    exec(`exec -a ${process} tor -f ${torrcFileDir}`);
+    exec(`exec -a ${process} /usr/bin/tor -f ${torrcFileDir}`);
     const agent = new SocksProxyAgent(`socks5h://127.0.0.1:${agentPort}`);
     agents[agentId] = agent;
     return start.call(this, agent, ...args);

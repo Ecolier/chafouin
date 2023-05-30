@@ -71,7 +71,7 @@ export function subscribe(userId: number, chatId: number,
 export async function unsubscribe (userId: number, path: string) {
   const alerts = await redis.json.get(`user:${userId}`, {path: '.alerts'}) as any[];
   await redis.json.set(`user:${userId}`, '.alerts',
-    (alerts as any[]).filter((alert) => alert.schedule === path)
+    (alerts as any[]).filter((alert) => alert.path !== path)
   );
   const alert = alerts.find(alert => alert.path === path);
   if (!alert) {
