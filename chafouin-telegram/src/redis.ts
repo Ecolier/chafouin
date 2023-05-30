@@ -1,7 +1,8 @@
 import { createClient } from "redis";
 
-export const createRedisClient = () => createClient({
+const redisClient = createClient({
   url: 'redis://telegram-cache:6379'
 });
 
-export type RedisClient = ReturnType<typeof createRedisClient>;
+export type RedisClient = typeof redisClient;
+export default redisClient;

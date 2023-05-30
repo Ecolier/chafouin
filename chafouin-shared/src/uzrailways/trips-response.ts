@@ -1,4 +1,4 @@
-export interface UZRWTripsResponse {
+export interface TripsResponse {
   express: {
     hasError: boolean;
     type: string;

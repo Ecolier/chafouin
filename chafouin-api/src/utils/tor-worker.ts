@@ -1,5 +1,5 @@
 import { SocksProxyAgent } from "socks-proxy-agent";
-import createWorker from "./worker.js";
+import createWorker, { Worker } from "./worker.js";
 
 import fs from 'fs';
 import path from 'path';
@@ -21,25 +21,29 @@ type Agents = {[workerId: string]: SocksProxyAgent};
 
 const agents: Agents = {};
 
-export default <T extends unknown[]> (agentId: string, start: (agent: SocksProxyAgent, ...args: T) => void) => {
-  return createWorker<T>((...args: T) => {
+export default <T extends unknown[], U extends unknown[]> (
+  agentId: string, 
+  start: (this: Worker<T, U>, agent: SocksProxyAgent, ...args: T) => void,
+  stop: (this: Worker<T, U>) => void
+  ) => {
+  const process = agentId.replaceAll(':', '_');
+  const torDir = path.resolve(path.join(configDirectory, process));
+  const torrcFileDir = path.resolve(path.join(torDir, 'torrc'));
+  return createWorker<T, U>(function (...args: T) {
     const agentsCount = Object.keys(agents).length;
     const agentPort = 9050 + (10 * agentsCount);
     const controlPort =  9051 + (10 * agentsCount);
-    
-    const torDir = path.resolve(path.join(configDirectory, agentId));
-    const torrcFileDir = path.resolve(path.join(torDir, 'torrc'));
-    
     if (!fs.existsSync(torDir)){
-      fs.mkdirSync(torDir);
+      fs.mkdirSync(torDir, { recursive: true });
     }
-    
-    fs.writeFileSync(torrcFileDir, torrc(agentPort, controlPort, agentId));
-    
-    exec(`tor -f ${torrcFileDir}`);
+    fs.writeFileSync(torrcFileDir, torrc(agentPort, controlPort, process));
+    exec(`exec -a ${process} tor -f ${torrcFileDir}`);
     const agent = new SocksProxyAgent(`socks5h://127.0.0.1:${agentPort}`);
     agents[agentId] = agent;
-    
-    return start(agent, ...args);
+    return start.call(this, agent, ...args);
+  }, function () {
+    exec(`pkill -f ${process}`);
+    fs.rmSync(torDir, {recursive: true, force: true});
+    return stop.call(this);
   });
 }

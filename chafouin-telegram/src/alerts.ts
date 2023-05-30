@@ -1,13 +1,13 @@
-import { Trip, TripSchedule, TripUpdate, tripScheduleEquals } from "chafouin-shared";
+import { Trips, Schedule } from "chafouin-shared";
 import EventSource from "eventsource";
-import { RedisClient } from "./redis";
+import redis from "./redis.js";
 import winston from "winston";
 import { formatTripSchedule } from "./format-trip-schedule.js";
 import fetch from "node-fetch";
 
 export interface Alert {
-  channelId: number;
-  schedule: TripSchedule;
+  channelId: string;
+  schedule: Schedule;
 }
 
 export interface User {
@@ -21,9 +21,9 @@ if (!scraperBaseUrl) {
 }
 
 export function subscribe(userId: number, chatId: number,
-  schedule: TripSchedule, redisClient: RedisClient, channelId?: number) {
+  schedule: Schedule, channelId?: string) {
   const {outboundStation, inboundStation, departureDate} = schedule; 
-  
+  const path = schedule.toPath();
   const source = new EventSource(
     encodeURI(`${scraperBaseUrl}/subscribe` + 
     `?outbound=${outboundStation}` + 
@@ -32,29 +32,34 @@ export function subscribe(userId: number, chatId: number,
     '&seats=true' +
     (channelId !== undefined ? `&channel=${channelId}` : '')
   ));
+  source.addEventListener('close', async (event) => {
+    console.log('close');
+    source.close();
+  });
   source.addEventListener('channel', async (event) => {      
-    const channelId = parseInt(event.data)
-    let savedUser = await redisClient.json.get(
+    const channelId = event.data
+    let savedUser = await redis.json.get(
       `user:${userId}`
     ) as any;
     if (!savedUser) {
-      await redisClient.json.set(`user:${userId}`, '$', {chatId});
-      await redisClient.json.set(`user:${userId}`, '.alerts', [{
+      await redis.json.set(`user:${userId}`, '$', {chatId});
+      await redis.json.set(`user:${userId}`, '.alerts', [{
+        path,
         channelId,
         schedule: {outboundStation, inboundStation, departureDate}
       }]);
     }
-    savedUser = await redisClient.json.get(
+    savedUser = await redis.json.get(
       `user:${userId}`
     ) as any;
     winston.info(`User ${userId} in chat ${chatId} subscribed to ${formatTripSchedule(schedule)} on channel no. ${channelId}`);
-    const savedAlerts = (savedUser.alerts as any[]).filter(alert => !tripScheduleEquals(alert.schedule, schedule));
-    await redisClient.json.set(`user:${userId}`, '.alerts', [...savedAlerts, {
-      channelId, schedule
+    const savedAlerts = (savedUser.alerts as any[]).filter(alert => alert.path !== path);
+    await redis.json.set(`user:${userId}`, '.alerts', [...savedAlerts, {
+      channelId, schedule, path
     }]);
   });
   return {
-    onUpdate(tripUpdateFn: (trips: (Trip | TripUpdate)[]) => void) {
+    onUpdate(tripUpdateFn: (trips: Trips) => void) {
       source.addEventListener('update', (event) => {
         winston.info(`User ${userId} in chat ${chatId} received trip update for ${formatTripSchedule(schedule)}`);
         tripUpdateFn(JSON.parse(event.data));
@@ -63,24 +68,18 @@ export function subscribe(userId: number, chatId: number,
   };
 }
 
-export async function unsubscribe (userId: number, schedule: TripSchedule, redisClient: RedisClient) {
-
-  const alerts = await redisClient.json.get(`user:${userId}`, {path: '.alerts'}) as any[];
-  await redisClient.json.set(`user:${userId}`, '.alerts', 
-    (alerts as any[]).filter((alert) => !tripScheduleEquals(alert.schedule, schedule))
+export async function unsubscribe (userId: number, path: string) {
+  const alerts = await redis.json.get(`user:${userId}`, {path: '.alerts'}) as any[];
+  await redis.json.set(`user:${userId}`, '.alerts',
+    (alerts as any[]).filter((alert) => alert.schedule === path)
   );
-
-  const alert = alerts.find(alert => tripScheduleEquals(alert.schedule, schedule));
+  const alert = alerts.find(alert => alert.path === path);
   if (!alert) {
-    throw Error(`User ${userId} has no alert for ${formatTripSchedule(schedule)}`)
+    throw Error(`User ${userId} has no alert for ${path}`)
   }
-
-  winston.info(`User ${userId} unsubscribed from ${formatTripSchedule(schedule)} on channel no. ${alert.channelId}`);
-
+  winston.info(`User ${userId} unsubscribed from ${path} on channel no. ${alert.channelId}`);
   fetch(encodeURI(`${scraperBaseUrl}/unsubscribe` + 
   `?channel=${alert.channelId}` +
-  `&outbound=${schedule.outboundStation}` + 
-  `&inbound=${schedule.inboundStation}` +
-  `&date=${schedule.departureDate}`
+  `&path=${path}`
   ));
 }

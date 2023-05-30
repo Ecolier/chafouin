@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { TripSchedule } from 'chafouin-shared';
+import { Schedule } from 'chafouin-shared';
 import winston from "winston";
 import uzrailways from "../uzrailways.js";
 
@@ -28,11 +28,10 @@ export default function(req: Request, res: Response, next: NextFunction) {
     winston.info('Search query validation failed: invalid departure date.');
     return res.status(400).send('Invalid date');
   }
-  res.locals.schedule = {
-    ...res.locals,
+  res.locals.schedule = new Schedule(
     outboundStation, 
     inboundStation,
-    departureDate: parsedDate.toISOString().substring(0, 10),
-  } as TripSchedule;
+    parsedDate
+  );
   return next();
 }

@@ -4,7 +4,7 @@ cd chafouin-shared
 npm install
 npm run build
 
-cd ../chafouin-server
+cd ../chafouin-api
 npm install
 npm run build
 

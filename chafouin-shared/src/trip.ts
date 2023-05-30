@@ -1,19 +1,31 @@
-export interface TripSchedule {
+export interface ISchedule {
   outboundStation: string;
   inboundStation: string;
-  departureDate: string;
+  departureDate: Date;
 }
 
-export interface TrainData {
-  trainType: string;
-  trainId: string;
+export class Schedule implements Schedule {
+  constructor(
+    public readonly outboundStation: string, 
+    public readonly inboundStation: string,
+    public readonly departureDate: Date) {
+  }
+  static fromPath(path: string): Schedule {
+    const components = path.split(':');
+    return new Schedule(components[0], components[1], new Date(components[2]));
+  }
+  toPath() {
+    return `${this.outboundStation}:${this.inboundStation}:${this.departureDate.toLocaleDateString('fr-FR').replaceAll('/', '-')}`;
+  }
 }
 
-export const tripScheduleEquals = (a: TripSchedule, b: TripSchedule) => (
-  a.outboundStation === b.outboundStation &&
-  a.inboundStation === b.inboundStation &&
-  a.departureDate === b.departureDate
-);
+export interface Train {
+  type: string;
+  name: string;
+  freeSeats: number | {current: number, previous: number};
+}
 
-export type Trip = TripSchedule & TrainData & {freeSeats: number};
-export type TripUpdate = TripSchedule & TrainData & {freeSeats: number | {current: number, previous: number}};
+export interface Trips {
+  schedule: Schedule;
+  trains: Train[];
+}

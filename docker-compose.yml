@@ -2,14 +2,14 @@ version: "3"
 
 services:
   scraper:
-    build: ./chafouin-server
+    build: ./chafouin-api
     working_dir: /usr/src/app
     restart: always
     environment:
       - TORRC_DIR=/etc/tor
       - TOR_DIR=/var/lib
     volumes:
-      - ./chafouin-server:/usr/src/app
+      - ./chafouin-api:/usr/src/app
       - ./chafouin-shared:/usr/src/chafouin-shared
     expose:
       - "8080:8080"

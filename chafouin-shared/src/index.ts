@@ -1,2 +1,2 @@
-export { Trip, TripSchedule, TripUpdate, TrainData, tripScheduleEquals } from './trip.js';
-export * as UzbekistanRailways from './uzrailways/index.js';
+export * from './trip.js';
+export * as uzrailways from './uzrailways/index.js';

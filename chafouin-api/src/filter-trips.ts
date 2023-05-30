@@ -1,21 +1,25 @@
-import { TripUpdate } from 'chafouin-shared';
-import { TripFilters } from './middlewares/parse-filters';
+import { Train, Trips } from 'chafouin-shared';
+import { TrainFilters } from './middlewares/parse-filters';
 
-export default function(tripUpdates: TripUpdate[],
-  {trainId, trainType, freeSeatCountUpdated, isNewlyAvailable}: TripFilters) {
-  if (trainId) {
-    tripUpdates = tripUpdates.filter(trip => (trip.trainId === trainId));
-  } else if (trainType) {
-    tripUpdates = tripUpdates.filter(trip => (trip.trainType === trainType));
+export default function(trips: Trips, filters: TrainFilters): Trips {
+  let trains: Train[] = trips.trains;
+  if (filters.name) {
+    trains = trains.filter(train => train.name === filters.name);
   }
-  if (freeSeatCountUpdated) {
-    tripUpdates = tripUpdates.filter(trip => (typeof trip.freeSeats !== 'number'));
-  } else if (isNewlyAvailable) {
-    tripUpdates = tripUpdates.filter(trip => (
-      typeof trip.freeSeats !== 'number' && 
-      trip.freeSeats.previous === 0 && 
-      trip.freeSeats.current > trip.freeSeats.previous
+  if (filters.type) {
+    trains = trains.filter(train => train.type === filters.type);
+  }
+  if (filters.changed) {
+    trains = trains.filter(train => (typeof train.freeSeats !== 'number'));
+  } else if (filters.available) {
+    trains = trains.filter(train => (
+      typeof train.freeSeats !== 'number' && 
+      train.freeSeats.previous === 0 && 
+      train.freeSeats.current > train.freeSeats.previous
     ));
   }
-  return tripUpdates;
+  return {
+    ...trips,
+    trains,
+  };
 }

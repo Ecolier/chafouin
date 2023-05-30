@@ -1,4 +1,0 @@
-{
-  "watch": ["src/**/*.ts"],
-  "exec": "node --inspect --loader ts-node/esm"
-}

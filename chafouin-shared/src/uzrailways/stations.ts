@@ -1,4 +1,4 @@
-export const UZRW_STATIONS: {[key: string]: string} = {
+export const stations: {[key: string]: string} = {
   2900000: "Tashkent",
   2900700: "Samarkand",
   2900800: "Bukhara",

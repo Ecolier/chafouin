@@ -1,21 +1,19 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
-import {TripSchedule, Trip, UzbekistanRailways} from 'chafouin-shared';
+import {Schedule, Train, uzrailways} from 'chafouin-shared';
 import fetch from 'node-fetch';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 
-import logging from './logging.js';
+import logging from './utils/logging.js';
 const logger = logging('uzrailways');
 
-const UZRAILWAYS_ORIGIN = 'https://e-ticket.railway.uz';
+const UZRAILWAYS_ORIGIN = 'https://chipta.railway.uz';
 const UZRAILWAYS_TRAINS_ENDPOINT = "/api/v1/trains/availability/space/between/stations";
 
 export default {
-  stations: Object.values(UzbekistanRailways.stations),
-  async fetchTrips(schedule: TripSchedule, agent?: SocksProxyAgent): Promise<Trip[]> {
-    const {inboundStation, outboundStation, departureDate} = schedule;
-    const formattedDate = new Date(departureDate).toLocaleDateString("fr-FR").replaceAll("/", ".");
-    
+  stations: Object.values(uzrailways.stations),
+  async fetchTrips(schedule: Schedule, agent?: SocksProxyAgent): Promise<Train[]> {
+    const formattedDate = new Date(schedule.departureDate).toLocaleDateString("fr-FR").replaceAll("/", ".");
     let response;
     try {
       response = await fetch(`${UZRAILWAYS_ORIGIN}${UZRAILWAYS_TRAINS_ENDPOINT}`, {
@@ -28,8 +26,8 @@ export default {
               type: "Forward",
             },
           ],
-          stationFrom: Object.keys(UzbekistanRailways.stations).find((stationId) => UzbekistanRailways.stations[stationId].toUpperCase() === outboundStation.toUpperCase()),
-          stationTo: Object.keys(UzbekistanRailways.stations).find((stationId) => UzbekistanRailways.stations[stationId].toUpperCase() === inboundStation.toUpperCase()),
+          stationFrom: Object.keys(uzrailways.stations).find((stationId) => uzrailways.stations[stationId].toUpperCase() === schedule.outboundStation.toUpperCase()),
+          stationTo: Object.keys(uzrailways.stations).find((stationId) => uzrailways.stations[stationId].toUpperCase() === schedule.inboundStation.toUpperCase()),
           detailNumPlaces: 1,
           showWithoutPlaces: 0,
         }),
@@ -45,7 +43,7 @@ export default {
       return [];
     }
     
-    const content = await response.json() as UzbekistanRailways.TripsResponse;
+    const content = await response.json() as uzrailways.TripsResponse;
     
     const trips = content.express?.direction?.[0].trains?.[0].train;
     if (!trips) {
@@ -54,12 +52,9 @@ export default {
     }
     
     return trips.map((trip) => ({
-      trainId: trip.number,
-      outboundStation,
-      inboundStation,
-      departureDate,
+      name: trip.number,
       freeSeats: trip.places.cars.reduce((prev, curr) => (prev + parseInt(curr.freeSeats)), 0),
-      trainType: trip.type,
+      type: trip.type,
     }));
   }
 }
