@@ -10,6 +10,13 @@ export class Schedule implements Schedule {
     public readonly inboundStation: string,
     public readonly departureDate: Date) {
   }
+  static from(schedule: ISchedule) {
+    return new Schedule(
+      schedule.outboundStation,
+      schedule.inboundStation,
+      new Date(schedule.departureDate)
+    );
+  }
   static fromPath(path: string): Schedule {
     const components = path.split(':');
     return new Schedule(components[0], components[1], new Date(components[2]));

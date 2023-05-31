@@ -1,13 +1,14 @@
-import { Trips, Schedule } from "chafouin-shared";
+import { Schedule, ISchedule } from "chafouin-shared";
 import EventSource from "eventsource";
-import redis from "./redis.js";
+import redis from "../redis.js";
 import winston from "winston";
-import { formatTripSchedule } from "./format-trip-schedule.js";
 import fetch from "node-fetch";
+import Trips from "./trips.js";
 
 export interface Alert {
   channelId: string;
-  schedule: Schedule;
+  path: string;
+  schedule: ISchedule;
 }
 
 export interface User {
@@ -20,8 +21,7 @@ if (!scraperBaseUrl) {
   throw Error('Environment process.env.SCRAPER_BASE_URL must be set');
 }
 
-export function subscribe(userId: number, chatId: number,
-  schedule: Schedule, channelId?: string) {
+export function subscribe(userId: number, schedule: Schedule, channelId?: string) {
   const {outboundStation, inboundStation, departureDate} = schedule; 
   const path = schedule.toPath();
   const source = new EventSource(

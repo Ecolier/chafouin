@@ -1,8 +1,8 @@
 import { Scenes } from "telegraf";
-import redis from "./redis.js";
+import redis from "../redis.js";
 import { SceneContext } from "telegraf/typings/scenes";
 import { InlineKeyboardButton } from "telegraf/typings/core/types/typegram";
-import * as alerts from './alerts.js'
+import * as alerts from '../utils/alert.js'
 import { Schedule } from "chafouin-shared";
 
 export const alertSceneId = 'CHFN_ALERT_SCENE';

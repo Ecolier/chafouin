@@ -3,17 +3,17 @@ dotenv.config();
 
 import winston from 'winston';
 
-import start from './start.js'
+import start from './scenes/start.js'
 
 import { Telegraf, session, Scenes } from "telegraf";
-import subscribeScene, { formatAlert, subscribeSceneId } from "./subscribe.js";
-import alertScene, { alertSceneId } from './alerts-menu.js';
+import subscribeScene, { formatAlert, subscribeSceneId } from "./scenes/subscribe.js";
+import alertScene, { alertSceneId } from './scenes/alerts.js';
 
 import redis from './redis.js';
 import { SceneContext } from 'telegraf/typings/scenes/context.js';
 
-import * as alerts from './alerts.js';
-import { formatTripSchedule } from './format-trip-schedule.js';
+import * as alerts from './scenes/alerts.js';
+import { formatTripSchedule } from './utils/schedule.js';
 import { Schedule } from 'chafouin-shared';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
