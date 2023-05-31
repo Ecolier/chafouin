@@ -9,7 +9,7 @@ export default function(trips: Trips, filters: TrainFilters): Trips {
   if (filters.type) {
     trains = trains.filter(train => train.type === filters.type);
   }
-  if (filters.changed) {
+  if (filters.seats) {
     trains = trains.filter(train => (typeof train.freeSeats !== 'number'));
   } else if (filters.available) {
     trains = trains.filter(train => (

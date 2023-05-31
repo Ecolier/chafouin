@@ -1,7 +1,7 @@
 export interface ISchedule {
   outboundStation: string;
   inboundStation: string;
-  departureDate: Date;
+  departureDate: string;
 }
 
 export class Schedule implements Schedule {

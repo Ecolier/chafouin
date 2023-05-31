@@ -4,10 +4,11 @@ import { ParseMode } from "telegraf/typings/core/types/typegram";
 import winston from "winston";
 import redis from "../redis.js";
 import { SceneContext } from "telegraf/typings/scenes/context.js";
-import {Alert, subscribe} from '../utils/alert.js';
+import {subscribe} from '../utils/alert.js';
 import Schedule from "../utils/schedule.js";
 import * as paginate from "../utils/paginate.js";
 import calendar from "../utils/calendar.js";
+import { Alert } from "../utils/user.js";
 
 export interface SubscribeSceneState {
   outbound: string;
@@ -30,7 +31,9 @@ scene.enter(ctx => {
     message += `📍 To *${state.inbound}*\n`
   }
   if (state.date) {
-    message += `📆 On the *${new Date(state.date).toLocaleDateString('fr-FR')}*\n`
+    message += `📆 On the *${
+      new Date(state.date).toLocaleDateString('fr-FR')
+    }*\n`
   }
   const keyboard = [
     [{text: '🏠 Outbound station', callback_data: `@selectOutbound`}],
@@ -46,14 +49,15 @@ scene.enter(ctx => {
       inline_keyboard: keyboard,
     }
   };
-  if (Object.keys(ctx.scene.state).length !== 0 && ctx.updateType === 'callback_query') {
+  if (Object.keys(ctx.scene.state).length !== 0 &&
+  ctx.updateType === 'callback_query') {
     return ctx.editMessageText(message, markup);
   } 
   return ctx.replyWithMarkdownV2(message, markup);
 });
 
 scene.action('@search', async (ctx) => {
-  const userId = ctx.callbackQuery.from.id;
+  const userId = `${ctx.callbackQuery.from.id}`;
   const state = ctx.scene.state as SubscribeSceneState;
   const schedule = new Schedule(
     state.outbound,

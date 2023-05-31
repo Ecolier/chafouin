@@ -6,15 +6,12 @@ import winston from 'winston';
 import start from './scenes/start.js'
 
 import { Telegraf, session, Scenes } from "telegraf";
-import subscribeScene, { formatAlert, subscribeSceneId } from "./scenes/subscribe.js";
-import alertScene, { alertSceneId } from './scenes/alerts.js';
+import subscribeScene, { subscribeSceneId } from "./scenes/subscribe.js"
+import alertScene, { alertSceneId } from './scenes/alerts.js'
+import * as alert from './utils/alert.js';
 
 import redis from './redis.js';
 import { SceneContext } from 'telegraf/typings/scenes/context.js';
-
-import * as alerts from './scenes/alerts.js';
-import { formatTripSchedule } from './utils/schedule.js';
-import { Schedule } from 'chafouin-shared';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 if (!TELEGRAM_BOT_TOKEN) {
@@ -58,30 +55,11 @@ await redis.connect();
 winston.info(`Connected to redis instance`);
 
 // Restore event sources from redis for each users
-for await (const key of redis.scanIterator({
-  MATCH: 'user:*',
-})) {
-  const userId = parseInt(key.split(':')[1]);
-  let savedUser: any = {};
-  try {
-    savedUser = await redis.json.get(key) as any;
-  } catch (error) {
-    winston.info(`No alerts to restore for user ${userId}`);
-  }
-  (savedUser.alerts as any[]).forEach(async savedAlert => {
-    const schedule = new Schedule(
-      savedAlert.schedule.outboundStation,
-      savedAlert.schedule.inboundStation,
-      new Date(savedAlert.schedule.departureDate));
-    winston.info(`Restored alert for user ${userId} in chat ${parseInt(savedUser.chatId)} for ${formatTripSchedule(savedAlert.schedule)} on channel ${savedAlert.channelId}`);
-    alerts.subscribe(
-      userId,
-      parseInt(savedUser.chatId),
-      schedule,
-      savedAlert.channelId)
-    .onUpdate((trips) => telegramBot.telegram.sendMessage(parseInt(savedUser.chatId), formatAlert(trips)));
+alert.restore((userId, trips) => {
+  telegramBot.telegram.sendMessage(userId, trips.format(), {
+    parse_mode: 'MarkdownV2',
   });
-}
+});
 
 await telegramBot.launch();
 winston.info(`Launched Telegram bot`);

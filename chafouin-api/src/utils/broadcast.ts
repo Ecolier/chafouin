@@ -60,7 +60,6 @@ export default function<T extends unknown[], U extends unknown[]>(initWorker: In
         logger.info(`Destroy worker ${workerId}`);
         emitter.emit('destroy_worker', channelId);
       }
-      logger.debug(this.workers);
     },
     destroyWorker(fn: DestroyWorkerFunction) {
       emitter.on('destroy_worker', fn);
