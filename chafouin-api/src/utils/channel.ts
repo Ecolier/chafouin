@@ -14,7 +14,7 @@ export default function<U extends unknown[]>(): Channel<U> {
     data(fn) { emitter.on('data', fn) },
     destroy() { 
       emitter.emit('destroy');
-      emitter.removeAllListeners() 
+      emitter.removeAllListeners();
     },
     onDestroy(fn: () => void) {
       emitter.on('destroy', fn);

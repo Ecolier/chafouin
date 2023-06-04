@@ -4,7 +4,7 @@ import { SceneContext } from "telegraf/typings/scenes";
 import { InlineKeyboardButton } from "telegraf/typings/core/types/typegram";
 import * as alerts from '../utils/alert.js'
 import { Schedule } from "chafouin-shared";
-import { User } from "../utils/user.js";
+import { Alerts, User } from "../utils/user.js";
 
 export const alertSceneId = 'CHFN_ALERT_SCENE';
 
@@ -17,14 +17,14 @@ scene.enter(async (ctx) => {
   }
   let message = `You have no active alert\\.`;
   let keyboard: InlineKeyboardButton[][] = [];
-  const user = await redis.json.get(`user:${userId}`) as unknown as User;
-  if (user && user.alerts.length !== 0) {
+  const alerts = await redis.json.get(`user:${userId}`, {path: '.alerts'}) as unknown as Alerts;
+  if (alerts && Object.keys(alerts).length !== 0) {
     message = `You're currently subscribed to these alerts\\. Unsubscribe from an alert to stop being notified about a trip\\.`;
-    keyboard = [...(user.alerts).map(({schedule}) => [
+    keyboard = [...(Object.values(alerts).map(({schedule}) => [
       { text: `🔕 from ${schedule.outboundStation.substring(0, 3).toUpperCase()} to ${schedule.inboundStation.substring(0, 3).toUpperCase()} on the ${new Date(schedule.departureDate).toLocaleDateString('fr-FR')}`, 
       callback_data: `@unsubscribe(${schedule.outboundStation}, ${schedule.inboundStation}, ${schedule.departureDate})`}
-    ])]
-  } 
+    ]))]
+  }
   if (ctx.updateType === 'callback_query') {
     return ctx.editMessageText(`🔔 *Manage your alerts\\.*\n\n${message}`, {
       parse_mode: 'MarkdownV2',

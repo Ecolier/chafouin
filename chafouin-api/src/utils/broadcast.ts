@@ -1,7 +1,7 @@
 import {EventEmitter} from "events";
-import logging from './logging.js'
 import { Worker } from "./worker.js";
 
+import logging from './logging.js'
 const logger = logging('broadcaster');
 
 type Workers<T extends unknown[], U extends unknown[]> = {
@@ -10,16 +10,14 @@ type Workers<T extends unknown[], U extends unknown[]> = {
 
 export type ConnectFunction = (workerId: string, channelId: string) => void;
 export type DisconnectFunction = (workerId: string, channelId: string) => void;
-export type InitWorkerFunction<T extends unknown[], U extends unknown[]> = (workerId: string) => Worker<T, U>;
-export type DestroyWorkerFunction = (channelId: string) => void;
+export type InitWorkerFunction<T extends unknown[], U extends unknown[]> = (workerId: string) => Worker<T, U> | Promise<Worker<T, U>>;
 export type CreateWorkerFunction<T extends unknown[], U extends unknown[]> = (workerId: string, worker: Worker<T, U>) => void;
 
 export interface Broadcast<T extends unknown[], U extends unknown[]> {
   workers: Workers<T, U>;
-  subscribe(workerId: string): Worker<T, U>;
+  subscribe(workerId: string): Worker<T, U> | Promise<Worker<T, U>>;
   unsubscribe(workerId: string, channelId: string): void;
   createWorker(fn: CreateWorkerFunction<T, U>): void;
-  destroyWorker(fn: DestroyWorkerFunction): void;
   connect(fn: ConnectFunction): void;
   disconnect(fn: DisconnectFunction): void;
 }
@@ -37,18 +35,19 @@ export default function<T extends unknown[], U extends unknown[]>(initWorker: In
     disconnect(fn: DisconnectFunction) {
       emitter.on('disconnect', fn);
     },
-    subscribe(workerId: string) {
+    async subscribe(workerId: string) {
+      logger.info(`Subscribe to worker ${workerId}`);
       let worker = this.workers[workerId];
       if (!worker) {
-        logger.info(`Create new worker ${workerId}`);
-        worker = initWorker(workerId);
+        logger.info(`Create worker ${workerId}`);
+        worker = await Promise.resolve(initWorker(workerId));
         this.workers[workerId] = worker;
         emitter.emit('create_worker', workerId, this.workers[workerId]);
       }
-      logger.debug(this.workers);
       return worker;
     },
     unsubscribe(workerId: string, channelId: string) {
+      logger.info(`Unsubscribe from worker ${workerId}`);
       const worker = this.workers[workerId];
       if (!worker) {
         return;
@@ -56,13 +55,6 @@ export default function<T extends unknown[], U extends unknown[]>(initWorker: In
       worker.stop(channelId);
       const {[workerId]: _, ...rest} = this.workers;
       this.workers = rest;
-      if (Object.keys(worker).length === 0) {
-        logger.info(`Destroy worker ${workerId}`);
-        emitter.emit('destroy_worker', channelId);
-      }
     },
-    destroyWorker(fn: DestroyWorkerFunction) {
-      emitter.on('destroy_worker', fn);
-    }
   }
 }

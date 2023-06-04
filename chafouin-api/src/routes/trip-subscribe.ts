@@ -18,7 +18,7 @@ async (req, res) => {
   const channelRequest = req.query.channel as string;
 
   const path = schedule.toPath();
-  const worker = tripBroadcast.subscribe(path);
+  const worker = await tripBroadcast.subscribe(path);
   const [channelId, channel] = worker.start(channelRequest, schedule);
 
   res.writeHead(200, {
@@ -30,7 +30,11 @@ async (req, res) => {
   res.write('event: channel\ndata: ' + channelId + '\n\n');
 
   channel.onDestroy(() => {
-    res.write('event: close\n\n');
+    res.write('event: close\ndata: close\n\n');
+  });
+
+  res.on('close', () => {
+    logger.info(`closed stream ${channelId} for ${path}`);
   });
 
   channel.data(([trips]) => {

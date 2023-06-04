@@ -1,6 +1,9 @@
 import createChannel, { Channel } from './channel.js';
 import crypto from 'crypto';
 
+import logging from './logging.js'
+const logger = logging('worker');
+
 export type StartFunc<T extends unknown[], U extends unknown[]> = (this: Worker<T, U>, ...args: T) => void;
 export type StopFunc<T extends unknown[], U extends unknown[]> = (this: Worker<T, U>, channelId: string) => void;
 
@@ -26,10 +29,13 @@ export default function <T extends unknown[], U extends unknown[]> (
       if (!channel) {
         channel = createChannel();
       }
-      this.channels[channelId] = channel;
-      if (Object.keys(this.channels).length !== 0) {
+      if (Object.keys(this.channels).length === 0) {
+        logger.info(`Start and stream to ${channelId}`);
         startFunction.apply(this, args);
+      } else {
+        logger.info(`Stream to ${channelId}`);
       }
+      this.channels[channelId] = channel;
       return [channelId, channel];
     },
     stop(channelId) {
@@ -37,10 +43,12 @@ export default function <T extends unknown[], U extends unknown[]> (
       if (!channel) {
         return;
       }
+      logger.info(`${channelId} unsubscribed`);
       channel.destroy();
       const {[channelId]: _, ...rest} = this.channels;
       this.channels = rest;
       if (Object.keys(this.channels).length === 0) {
+        logger.info(`Stop because ${channelId} was the last subscriber`);
         stopFunction.call(this, channelId);
       }
     },

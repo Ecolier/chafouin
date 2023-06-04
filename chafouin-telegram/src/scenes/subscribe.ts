@@ -8,7 +8,7 @@ import {subscribe} from '../utils/alert.js';
 import Schedule from "../utils/schedule.js";
 import * as paginate from "../utils/paginate.js";
 import calendar from "../utils/calendar.js";
-import { Alert } from "../utils/user.js";
+import { Alerts } from "../utils/user.js";
 
 export interface SubscribeSceneState {
   outbound: string;
@@ -64,10 +64,10 @@ scene.action('@search', async (ctx) => {
     state.inbound,
     new Date(state.date)
   );
-  const alert = await redis.json.get(`user:${userId}`, {
+  const alerts = await redis.json.get(`user:${userId}`, {
     path: '.alerts'
-  }) as unknown[] as Alert[];
-  if (alert && alert.find(alert => schedule.toPath() === alert.path)) {
+  }) as unknown as Alerts;
+  if (alerts && alerts[schedule.toPath()]) {
     winston.info(`User ${userId} is already subscribed to ` + 
     schedule.toPath());
     ctx.replyWithMarkdownV2(`⚠️ *Already subscribed\\!*\n\nI'm already ` + 
@@ -82,7 +82,9 @@ scene.action('@search', async (ctx) => {
   }
   else {
     subscribe(userId, schedule).onUpdate((trips) => 
-      ctx.telegram.sendMessage(userId, trips.format())
+      ctx.telegram.sendMessage(userId, trips.format(), {
+        parse_mode: 'MarkdownV2'
+      })
     );
     ctx.replyWithMarkdownV2(`✅ *Subscription registered\\!*\n\nI'll notify ` + 
     `you once new seats are available\\. Would you like to search for ` + 

@@ -8,6 +8,7 @@ import alertUnsubscribe from './routes/trip-unsubscribe.js';
 import searchTrips from './routes/trip-search.js';
 
 import logging from './utils/logging.js';
+
 const logger = logging('server');
 
 const app = express();

@@ -3,6 +3,6 @@ import uzrailways from './uzrailways.js';
 import createTripWorker from './trip-worker.js'
 import { Schedule, Trips } from 'chafouin-shared';
 
-export default broadcast<[Schedule], [Trips]>((workerId) => 
-  createTripWorker(workerId, uzrailways.fetchTrips)
-);
+export default broadcast<[Schedule], [Trips]>((workerId) => {
+  return createTripWorker(workerId, uzrailways.fetchTrips)
+});

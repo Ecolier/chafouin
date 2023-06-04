@@ -1,12 +1,13 @@
 import { ISchedule } from "chafouin-shared";
 
-export interface Alert {
-  channelId: string;
-  path: string;
-  schedule: ISchedule;
+export interface Alerts {
+  [path: string]: {
+    channel: string;
+    schedule: ISchedule & {[key: string]: string};
+  }
 }
 
 export interface User {
-  alerts: Alert[];
-  chatId: number;
+  [key: string]: object;
+  alerts: Alerts;
 }
