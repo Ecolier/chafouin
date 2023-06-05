@@ -26,7 +26,7 @@ export default (workerId: string, fetch: fetchFn): Promise<TripWorker> => {
         if (cachedTrain 
           && typeof cachedTrain.freeSeats === 'number'
           && typeof train.freeSeats === 'number'
-          && cachedTrain.freeSeats !== cachedTrain.freeSeats) {
+          && cachedTrain.freeSeats !== train.freeSeats) {
           return {...train, freeSeats: { current: train.freeSeats, previous: cachedTrain.freeSeats }}
         }
         return train;

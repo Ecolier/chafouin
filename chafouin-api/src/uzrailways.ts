@@ -43,11 +43,17 @@ export default {
       return [];
     }
     
-    const content = await response.json() as uzrailways.TripsResponse;
+    let content;
+    try {
+      content = await response.json() as uzrailways.TripsResponse;
+    } catch (e) {
+      logger.error(`Couldn't read JSON from ${response.body}`);
+      return [];
+    }
     
     const trips = content.express?.direction?.[0].trains?.[0].train;
     if (!trips) {
-      logger.error(`Couldn't extract trip data from response: ${response.statusText}`);
+      logger.error(`Couldn't extract trip data from response: ${content}`);
       return [];
     }
     
