@@ -6,32 +6,35 @@ services:
     working_dir: /usr/src/app
     restart: always
     environment:
-      - TORRC_DIR=/etc/tor
-      - TOR_DIR=/var/lib
+      - TOR_CONFIG_DIR=/etc/tor
+      - TOR_DATA_DIR=/etc/tor
     volumes:
       - ./chafouin-api:/usr/src/app
       - ./chafouin-shared:/usr/src/chafouin-shared
-    expose:
+    ports:
       - "8080:8080"
-    command: "npm start"
+      - "9229:9229"
+    command: "npm run start"
   telegram:
-    build: ./chafouin-telegram
+    image: node:20-alpine
+    working_dir: /usr/src/app
     environment:
       - SCRAPER_BASE_URL=http://scraper:8080
     user: "node"
-    working_dir: /usr/src/app
+    ports: 
+      - "9230:9229"
     restart: always
     volumes:
       - ./chafouin-telegram:/usr/src/app
       - ./chafouin-shared:/usr/src/chafouin-shared
-    command: "npm start"
+    command: "npm run start"
   telegram-cache:
     image: redis/redis-stack-server:6.2.6-v7
     restart: always
     ports:
-      - '6379:6379'
+      - "6379:6379"
     volumes: 
-      - cache:/data
+      - telegram-cache:/data
 volumes:
-  cache:
+  telegram-cache:
     driver: local
