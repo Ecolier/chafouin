@@ -1,0 +1,27 @@
+{
+  "name": "@chafouin/telegram",
+  "type": "module",
+  "dependencies": {
+    "@chafouin/common": "workspace:^",
+    "@chafouin/provider": "workspace:^",
+    "@chafouin/uzrailways": "workspace:^",
+    "debug": "^4.3.4",
+    "dotenv": "^16.0.3",
+    "eventsource": "^2.0.2",
+    "node-fetch": "^3.3.1",
+    "redis": "^4.6.6",
+    "telegraf": "^4.12.2",
+    "winston": "^3.8.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./dist/index.js",
+    "watch": "nodemon ./src/index.ts"
+  },
+  "devDependencies": {
+    "@types/eventsource": "^1.1.11",
+    "@types/node": "^20.2.1",
+    "nodemon": "^2.0.22",
+    "typescript": "^5.0.4"
+  }
+}

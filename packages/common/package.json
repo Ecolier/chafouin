@@ -1,0 +1,20 @@
+{
+  "name": "@chafouin/common",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/**/*",
+    "src/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "postinstall": "tsc"
+  },
+  "dependencies": {
+    "winston": "^3.9.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  }
+}

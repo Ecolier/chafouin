@@ -1,1 +1,21 @@
-.DS_Store
+.vscode/
+node_modules/
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+**/*~
+**/*.log
+**/.DS_Store
+**/Thumbs.db
+
+**/lib
+**/dist
+
+.env

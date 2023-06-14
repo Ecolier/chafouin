@@ -1,0 +1,21 @@
+{
+  "name": "@chafouin/uzrailways",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/**/*",
+    "src/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "postinstall": "tsc"
+  },
+  "dependencies": {
+    "@chafouin/common": "workspace:^",
+    "node-fetch": "^3.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  }
+}
