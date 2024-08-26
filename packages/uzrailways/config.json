@@ -1,0 +1,3 @@
+{
+  "fetchTripsUrl": "https://eticket.railway.uz/api/v3/trains/availability/space/between/stations"
+}

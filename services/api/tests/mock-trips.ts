@@ -1,5 +1,5 @@
 import { Schedule, Train, Trips } from '@chafouin/common';
-import { TripUpdateFn } from '../src/trip-worker.js.js';
+import { TripUpdateFn } from '../src/trip-worker.js';
 
 function weightedRandom(specs: {[key: string]: number}): number | undefined {
   let i: string;

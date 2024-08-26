@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "lib",
     "declaration": true,
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "lib"]
+    "resolveJsonModule": true,
+    "rootDir": "./src"
+  }
 }

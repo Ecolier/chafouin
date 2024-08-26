@@ -53,7 +53,7 @@ export default function <T extends unknown[], U extends unknown[]> (
       }
     },
     sendAll(...data: U) {
-      Object.values(this.channels).forEach(channel => {
+      Object.values(this.channels as Channels<U>).forEach(channel => {
         channel.send(...data);
       });
     },

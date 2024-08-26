@@ -8,13 +8,12 @@
     "src/**/*"
   ],
   "scripts": {
-    "build": "tsc",
-    "postinstall": "tsc"
+    "build": "yarn tools:build"
   },
   "dependencies": {
-    "winston": "^3.9.0"
+    "winston": "^3.14.2"
   },
   "devDependencies": {
-    "typescript": "^5.0.4"
+    "@chafouin/tools": "workspace:^"
   }
 }

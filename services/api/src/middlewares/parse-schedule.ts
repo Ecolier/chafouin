@@ -1,5 +1,5 @@
 import { Schedule, logging } from '@chafouin/common';
-import { stations } from '@chafouin/uzrailways';
+import provider from '@chafouin/provider';
 import { NextFunction, Request, Response } from 'express';
 const logger = logging('parse-schedule');
 
@@ -13,12 +13,12 @@ export default function(req: Request, res: Response, next: NextFunction) {
     logger.info('Search query validation failed: parameters are missing from query.');
     return res.status(400).send('Malformed query');
   }
-  if (!Object.values(stations).find(stationName => 
+  if (!Object.values(provider.stations).find(stationName => 
     stationName.toUpperCase() === outboundStation.toUpperCase())) {
       logger.info('Search query validation failed: unknown outbound station.');
     return res.status(400).send('Unknown outbound station');
   }
-  if (!Object.values(stations).find(stationName => 
+  if (!Object.values(provider.stations).find(stationName => 
     stationName.toUpperCase() === inboundStation.toUpperCase())) {
       logger.info('Search query validation failed: unknown inbound station.');
     return res.status(400).send('Unknown inbound station');

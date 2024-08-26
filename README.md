@@ -66,10 +66,9 @@ http://localhost:8080/subscribe
 
 ### Unsubscribe
 
-The minimal request to subscribe to a train must include the inbound station, outbound station and departure date.
+To unsubscribe, simply pass the 
 
 | Parameter | Description                  | Type    |Example     |
 | --------- |----------------------------- | ------- | ---------- |
-| inbound   | Name of the inbound station  | string  | tashkent   |
-| outbound  | Name of the outbound station | string  | bukhara    |
-| date      | Date of travel (YYYY-MM-DD)  | string  | 2024-09-01 |
+| channel   | Name of the inbound station  | string  | tashkent   |
+| path      | Name of the outbound station | string  | bukhara    |

@@ -2,6 +2,7 @@ import { Schedule, Train, logging } from '@chafouin/common';
 import { TripsResponse } from './trips-response.js';
 import stations from './stations.js';
 import fetch, { RequestInit } from 'node-fetch';
+import config from '../config.json' with {type: 'json'};
 
 const logger = logging('fetch-trips');
 
@@ -13,7 +14,7 @@ export default async function (schedule: Schedule, builder?: () => RequestInit):
 
   let response;
   try {
-    response = await fetch(`https://chipta.railway.uz/api/v1/trains/availability/space/between/stations`, {
+    response = await fetch(config.fetchTripsUrl, {
       ...request,
       body: JSON.stringify({
         direction: [
